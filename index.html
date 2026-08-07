@@ -1,0 +1,2112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lina & Team</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lina">
+<meta name="theme-color" content="#FAF6EF">
+<style>
+  :root {
+    --cream: #FAF6EF;
+    --cream-panel: #F0E7D6;
+    --white: #FFFFFF;
+    --ink: #2B2A28;
+    --muted: #948773;
+    --teal: #00A98F;
+    --gold: #A8600A;
+    --danger: #E4573D;
+    --persona: #00A98F;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--cream);
+    color: var(--ink);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+  #app {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    height: 100dvh;
+    max-width: 560px;
+    margin: 0 auto;
+    position: relative;
+    background: var(--cream);
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--white);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    box-shadow: 0 1px 3px rgba(43,42,40,0.04);
+    flex-shrink: 0;
+  }
+  .avatar-badge {
+    width: 42px; height: 42px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; flex-shrink: 0; overflow: hidden;
+    background: color-mix(in srgb, var(--persona) 18%, var(--cream-panel));
+  }
+  .avatar-badge img { width: 100%; height: 100%; object-fit: cover; }
+  header .title { font-weight: 700; font-size: 18px; }
+  header .status { font-size: 12px; color: var(--teal); }
+  header .status.offline { color: var(--danger); }
+  header .actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+  button#menuToggle {
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+    flex-shrink: 0;
+  }
+
+  /* ---- Menü-Schublade (WhatsApp-Style) ---- */
+  #menuOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(20,18,15,0.35);
+    z-index: 60;
+    display: none;
+  }
+  #menuOverlay.active { display: block; }
+  #drawer {
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    width: 280px;
+    max-width: 82vw;
+    background: var(--white);
+    z-index: 70;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 2px 0 20px rgba(20,18,15,0.15);
+  }
+  #drawer.active { transform: translateX(0); }
+  .drawer-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 16px;
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .drawer-title { font-weight: 700; font-size: 17px; }
+  .drawer-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .drawer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+  }
+  .drawer-item:hover, .drawer-item.active { background: var(--cream-panel); }
+  .drawer-item .avatar-badge { width: 44px; height: 44px; font-size: 22px; }
+  .drawer-item-text { flex: 1; min-width: 0; }
+  .drawer-item-name { font-weight: 600; font-size: 15px; }
+  .drawer-item-role { font-size: 12px; color: var(--muted); }
+  .drawer-settings-btn {
+    margin: 8px 16px 16px;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(0,0,0,0.08);
+    background: var(--cream-panel);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* ---- Einstellungen ---- */
+  #settingsScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    z-index: 90;
+    display: none;
+    flex-direction: column;
+  }
+  #settingsScreen.active { display: flex; }
+  .settings-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 20px;
+    background: var(--white);
+    border-bottom: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  .settings-header button {
+    background: transparent;
+    border: none;
+    color: var(--ink);
+    font-size: 15px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .settings-header h1 { font-size: 17px; margin: 0; }
+  .settings-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+  .settings-row {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--white);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 14px;
+    padding: 12px;
+  }
+  .settings-row-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .settings-prompt-label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .settings-prompt-input {
+    width: 100%;
+    min-height: 60px;
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--ink);
+    outline: none;
+    resize: vertical;
+    font-family: inherit;
+    box-sizing: border-box;
+  }
+  .settings-avatar {
+    width: 52px; height: 52px; font-size: 26px;
+    cursor: pointer; flex-shrink: 0; position: relative;
+  }
+  .settings-avatar::after {
+    content: '\270E';
+    position: absolute; bottom: -2px; right: -2px;
+    background: var(--teal); color: #fff;
+    width: 18px; height: 18px; border-radius: 50%;
+    font-size: 10px; display: flex; align-items: center; justify-content: center;
+  }
+  .settings-name-input {
+    flex: 1; min-width: 0;
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 14px;
+    color: var(--ink);
+    outline: none;
+  }
+  .settings-reset {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 17px;
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 6px;
+  }
+  .settings-voices {
+    background: var(--white);
+    border: 1px solid rgba(0,0,0,0.06);
+    border-radius: 14px;
+    padding: 14px;
+    font-size: 13px;
+  }
+  .settings-voices-title { font-weight: 700; margin-bottom: 6px; }
+  .settings-voices-list { color: var(--muted); line-height: 1.5; word-break: break-word; }
+
+  #messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .msg-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
+    max-width: 88%;
+    animation: fadeInUp 0.25s ease;
+  }
+  .msg-row.lina { align-self: flex-start; }
+  .msg-row.user { align-self: flex-end; }
+  .msg-avatar-badge {
+    width: 26px; height: 26px; border-radius: 50%;
+    flex-shrink: 0; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    background: color-mix(in srgb, var(--badge-color, var(--teal)) 20%, var(--cream-panel));
+  }
+  .msg-avatar-badge img { width: 100%; height: 100%; object-fit: cover; }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .msg {
+    padding: 10px 14px;
+    border-radius: 16px;
+    line-height: 1.4;
+    font-size: 15px;
+  }
+  .msg.lina {
+    background: var(--white);
+    border: 1px solid rgba(0,0,0,0.05);
+    border-left: 3px solid var(--badge-color, transparent);
+    box-shadow: 0 1px 2px rgba(43,42,40,0.05);
+    color: var(--ink);
+    border-bottom-left-radius: 4px;
+  }
+  .msg.user {
+    background: var(--teal);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+  }
+  .msg.thinking { color: var(--muted); font-style: italic; }
+  .msg-label { font-size: 11px; font-weight: 700; margin-bottom: 3px; color: var(--badge-color, var(--muted)); }
+  .msg-caption { white-space: pre-wrap; }
+  .msg.has-image { padding: 6px; }
+  .msg.has-image .msg-caption { padding: 8px 6px 2px; }
+  .msg-image {
+    display: block;
+    max-width: 220px;
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  #imagePreview {
+    display: none;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    background: var(--cream-panel);
+    border-top: 1px solid rgba(0,0,0,0.06);
+  }
+  #imagePreview img {
+    width: 48px; height: 48px; border-radius: 10px; object-fit: cover;
+  }
+  #imagePreview span { font-size: 13px; color: var(--muted); flex: 1; }
+  #removeImage {
+    background: rgba(0,0,0,0.08);
+    border: none;
+    border-radius: 50%;
+    width: 26px; height: 26px;
+    cursor: pointer;
+    color: var(--ink);
+    font-size: 14px;
+  }
+
+  form#composer {
+    display: flex;
+    gap: 8px;
+    padding: 12px;
+    background: var(--white);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    flex-shrink: 0;
+  }
+  #input {
+    flex: 1;
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.06);
+    color: var(--ink);
+    border-radius: 999px;
+    padding: 12px 16px;
+    font-size: 15px;
+    outline: none;
+  }
+  button#send, button#mute, button#call, button#attach {
+    border-radius: 999px;
+    width: 46px; height: 46px;
+    font-size: 18px;
+    cursor: pointer;
+    flex-shrink: 0;
+    border: none;
+  }
+  button#send {
+    background: var(--teal);
+    color: #ffffff;
+  }
+  button#mute, button#call, button#attach {
+    background: transparent;
+    border: 1px solid rgba(0,0,0,0.1);
+    color: var(--ink);
+  }
+  button#mute.muted { color: var(--muted); }
+
+  #setup {
+    padding: 20px;
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  #setup code {
+    background: var(--cream-panel);
+    padding: 2px 6px;
+    border-radius: 6px;
+    color: var(--gold);
+  }
+
+  /* ---- Anruf-Overlay ---- */
+  #callOverlay {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 50% 30%, var(--white), var(--cream) 75%);
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 56px 24px 44px;
+    z-index: 50;
+    text-align: center;
+  }
+  #callOverlay.active { display: flex; }
+  .call-avatar-wrap { position: relative; margin-top: 32px; }
+  .call-avatar {
+    width: 140px; height: 140px; border-radius: 50%;
+    object-fit: cover; position: relative; z-index: 2;
+    border: 3px solid rgba(0,0,0,0.06);
+    box-shadow: 0 4px 20px rgba(43,42,40,0.12);
+  }
+  .call-avatar.emoji {
+    display: flex; align-items: center; justify-content: center;
+    font-size: 64px;
+    background: color-mix(in srgb, var(--persona) 18%, var(--white));
+  }
+  .call-avatar-ring {
+    position: absolute; inset: -14px; border-radius: 50%;
+    border: 2px solid var(--teal); opacity: 0;
+  }
+  #callOverlay.listening .call-avatar-ring {
+    animation: pulse-ring 1.6s ease-out infinite; opacity: 1;
+  }
+  #callOverlay.speaking .call-avatar-ring {
+    animation: pulse-ring 0.9s ease-out infinite; opacity: 1; border-color: var(--gold);
+  }
+  @keyframes pulse-ring {
+    0% { transform: scale(1); opacity: 0.8; }
+    100% { transform: scale(1.35); opacity: 0; }
+  }
+  .call-name { margin-top: 20px; font-size: 22px; font-weight: 700; }
+  .call-status { margin-top: 6px; font-size: 14px; color: var(--muted); min-height: 20px; }
+  .call-caption {
+    margin-top: 24px; font-size: 16px; text-align: center;
+    color: var(--ink); min-height: 48px; max-width: 420px; line-height: 1.4;
+  }
+  .hangup-btn {
+    width: 64px; height: 64px; border-radius: 50%;
+    background: var(--danger); color: white; border: none; font-size: 26px;
+    cursor: pointer; box-shadow: 0 4px 16px rgba(228,87,61,0.35);
+  }
+
+  /* ---- Login/Zugangscode ---- */
+  #loginScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+  }
+  #loginScreen.active { display: flex; }
+  .login-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px 28px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(43,42,40,0.1);
+  }
+  .login-card .avatar-badge {
+    width: 64px; height: 64px; font-size: 32px;
+    margin: 0 auto 16px;
+  }
+  .login-card h1 { font-size: 20px; margin: 0 0 8px; }
+  .login-card p { font-size: 14px; color: var(--muted); margin: 0 0 20px; line-height: 1.4; }
+  #loginForm { display: flex; flex-direction: column; gap: 12px; }
+  #accessCodeInput {
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 16px;
+    text-align: center;
+    color: var(--ink);
+    outline: none;
+  }
+  #loginForm button {
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  #loginError {
+    display: none;
+    color: var(--danger);
+    font-size: 13px;
+    margin-top: 12px;
+  }
+
+  /* ---- Ersteinrichtung (Lina führt durch das Setup) ---- */
+  #setupScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    display: none;
+    align-items: flex-start;
+    justify-content: center;
+    z-index: 100;
+    padding: 24px;
+    overflow-y: auto;
+  }
+  #setupScreen.active { display: flex; }
+  .setup-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 28px 24px;
+    max-width: 480px;
+    width: 100%;
+    box-shadow: 0 8px 30px rgba(43,42,40,0.1);
+    margin: 20px 0;
+  }
+  .setup-card .avatar-badge { width: 56px; height: 56px; font-size: 28px; margin: 0 auto 14px; }
+  .setup-card h1 { font-size: 20px; margin: 0 0 4px; text-align: center; }
+  .setup-card > p { font-size: 14px; color: var(--muted); margin: 0 0 18px; text-align: center; line-height: 1.4; }
+  .setup-step {
+    display: flex; gap: 10px; margin-bottom: 14px; font-size: 14px; line-height: 1.5;
+  }
+  .setup-step .num {
+    flex: none; width: 24px; height: 24px; border-radius: 50%;
+    background: var(--teal); color: #fff; font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .setup-step a { color: var(--teal); }
+  #setupForm { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
+  #setupForm label { font-size: 12px; font-weight: 600; color: var(--muted); }
+  #setupForm input {
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 12px 14px;
+    font-size: 15px;
+    color: var(--ink);
+    outline: none;
+  }
+  #setupForm button {
+    background: var(--teal);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    padding: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+
+  /* ---- Sprachwahl (allererster Schritt) ---- */
+  #langScreen {
+    position: fixed;
+    inset: 0;
+    background: var(--cream);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 110;
+    padding: 24px;
+  }
+  #langScreen.active { display: flex; }
+  .lang-card {
+    background: var(--white);
+    border-radius: 20px;
+    padding: 32px 28px;
+    max-width: 360px;
+    width: 100%;
+    text-align: center;
+    box-shadow: 0 8px 30px rgba(43,42,40,0.1);
+  }
+  .lang-card .avatar-badge { width: 64px; height: 64px; font-size: 32px; margin: 0 auto 16px; }
+  .lang-card h1 { font-size: 20px; margin: 0 0 20px; }
+  .lang-options { display: flex; flex-direction: column; gap: 10px; }
+  .lang-options button {
+    background: var(--cream-panel);
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .lang-options button:hover { background: var(--teal); color: #fff; }
+</style>
+</head>
+<body>
+<div id="langScreen">
+  <div class="lang-card">
+    <div class="avatar-badge"><img src="icon-192.png" alt="Lina"></div>
+    <h1>Deutsch oder English?</h1>
+    <div class="lang-options">
+      <button type="button" id="langBtnDe">🇩🇪 Deutsch</button>
+      <button type="button" id="langBtnEn">🇬🇧 English</button>
+    </div>
+  </div>
+</div>
+<div id="setupScreen">
+  <div class="setup-card">
+    <div class="avatar-badge"><img src="icon-192.png" alt="Lina"></div>
+    <h1 id="setupTitle">Hey, ich bin Lina 👋</h1>
+    <p id="setupIntro">Bevor wir loslegen, brauchst du einen eigenen, kostenlosen Cloudflare-Worker als Verbindung zwischen dieser Seite und der KI. Das dauert etwa 10 Minuten, einmalig, kein Programmieren nötig.</p>
+    <div id="setupSteps"></div>
+    <form id="setupForm">
+      <label for="setupWorkerUrl" id="setupWorkerLabel">Deine Worker-URL (aus Cloudflare)</label>
+      <input id="setupWorkerUrl" type="text" placeholder="https://lina-proxy.dein-name.workers.dev" autocomplete="off">
+      <label for="setupAccessCode" id="setupAccessLabel">Zugangscode (nur falls du einen eingerichtet hast)</label>
+      <input id="setupAccessCode" type="text" placeholder="optional" autocomplete="off">
+      <button type="submit" id="setupSubmitBtn">Los geht's</button>
+    </form>
+  </div>
+</div>
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="avatar-badge"><img src="icon-192.png" alt="Lina"></div>
+    <h1 id="loginTitle">Zugangscode</h1>
+    <p id="loginIntro">Bitte gib den Zugangscode ein, um mit Lina &amp; Team zu chatten.</p>
+    <form id="loginForm">
+      <input id="accessCodeInput" type="password" placeholder="Zugangscode" autocomplete="off">
+      <button type="submit" id="loginSubmitBtn">Weiter</button>
+    </form>
+    <div id="loginError"></div>
+  </div>
+</div>
+<div id="menuOverlay"></div>
+<nav id="drawer">
+  <div class="drawer-header">
+    <div class="avatar-badge"><img src="icon-192.png" alt="Lina"></div>
+    <div class="drawer-title">Lina &amp; Team</div>
+  </div>
+  <div class="drawer-list" id="drawerList"></div>
+  <button id="openSettings" class="drawer-settings-btn">⚙️ Einstellungen</button>
+</nav>
+
+<div id="settingsScreen">
+  <div class="settings-header">
+    <button id="closeSettings">← Zurück</button>
+    <h1 id="settingsTitle">Einstellungen</h1>
+  </div>
+  <div class="settings-list" id="settingsList"></div>
+</div>
+
+<div id="app">
+  <header>
+    <button id="menuToggle" title="Menü">☰</button>
+    <div id="headerAvatar" class="avatar-badge"></div>
+    <div>
+      <div class="title" id="headerTitle">Lina</div>
+      <div class="status" id="status">bereit</div>
+    </div>
+    <div style="flex:1"></div>
+    <div class="actions">
+      <button id="call" title="Anrufen">📞</button>
+      <button id="mute" title="Stimme an/aus">🔊</button>
+    </div>
+  </header>
+
+  <div id="messages"></div>
+
+  <div id="imagePreview">
+    <img id="imagePreviewImg" alt="Vorschau">
+    <span id="imageAttachedLabel">Bild wird mitgeschickt</span>
+    <button type="button" id="removeImage" title="Entfernen">✕</button>
+  </div>
+
+  <form id="composer">
+    <input type="file" id="imageInput" accept="image/*" hidden>
+    <button type="button" id="attach" title="Bild senden">🖼️</button>
+    <input id="input" type="text" placeholder="Schreib etwas…" autocomplete="off">
+    <button id="send" type="submit">➤</button>
+  </form>
+
+  <div id="callOverlay">
+    <div class="call-avatar-wrap">
+      <div class="call-avatar-ring"></div>
+      <div class="call-avatar" id="callAvatar"></div>
+    </div>
+    <div>
+      <div class="call-name" id="callName">Lina</div>
+      <div class="call-status" id="callStatus">Verbindet…</div>
+      <div class="call-caption" id="callCaption"></div>
+    </div>
+    <button id="hangup" class="hangup-btn" title="Auflegen">📵</button>
+  </div>
+</div>
+
+<script>
+// ---- Sprache (UI-Text + Standard-Persönlichkeiten + KI-Antwortsprache) ----
+// Wird beim allerersten Öffnen abgefragt (#langScreen), danach in
+// localStorage gespeichert, jederzeit in den Einstellungen änderbar.
+let uiLang = localStorage.getItem('lina_ui_lang') || '';
+
+const STRINGS = {
+  de: {
+    langTitle: 'Deutsch oder English?',
+    setupTitle: 'Hey, ich bin Lina 👋',
+    setupIntro: 'Bevor wir loslegen, brauchst du einen eigenen, kostenlosen Cloudflare-Worker als Verbindung zwischen dieser Seite und der KI. Das dauert etwa 10 Minuten, einmalig, kein Programmieren nötig.',
+    setupStep1: 'Kostenlosen Cloudflare-Worker anlegen: <a href="https://dash.cloudflare.com" target="_blank" rel="noopener">dash.cloudflare.com</a> → Workers &amp; Pages → Worker erstellen → den Code aus <code>worker/worker.js</code> einfügen → Deploy.',
+    setupStep2: 'Kostenlosen Groq-Key holen: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> → im Worker unter Settings → Variables and Secrets als <code>GROQ_API_KEY</code> eintragen.',
+    setupStep3: 'Deine Worker-URL (oben auf der Worker-Seite, endet auf <code>.workers.dev</code>) unten eintragen - fertig. Alles Weitere (Agenten umbenennen, Kalender verbinden) zeig ich dir dann in den Einstellungen.',
+    setupWorkerLabel: 'Deine Worker-URL (aus Cloudflare)',
+    setupAccessLabel: 'Zugangscode (nur falls du einen eingerichtet hast)',
+    setupSubmit: "Los geht's",
+    loginTitle: 'Zugangscode',
+    loginIntro: 'Bitte gib den Zugangscode ein, um mit Lina & Team zu chatten.',
+    loginPlaceholder: 'Zugangscode',
+    loginSubmit: 'Weiter',
+    loginWrongCode: 'Falscher Zugangscode. Bitte erneut eingeben.',
+    settingsMenuBtn: '⚙️ Einstellungen',
+    settingsTitle: 'Einstellungen',
+    back: '← Zurück',
+    menuTitle: 'Menü',
+    callTitle: 'Anrufen',
+    muteTitle: 'Stimme an/aus',
+    imageAttachedLabel: 'Bild wird mitgeschickt',
+    removeTitle: 'Entfernen',
+    attachTitle: 'Bild senden',
+    composerPlaceholder: 'Schreib etwas…',
+    composerPlaceholderTeam: 'Frag das ganze Team…',
+    composerPlaceholderPersona: (name) => `Schreib ${name} etwas…`,
+    hangupTitle: 'Auflegen',
+    callConnecting: 'Verbindet…',
+    callListening: 'Hört zu…',
+    callSpeaking: 'spricht…',
+    callConnected: 'Verbunden',
+    callMicDenied: 'Mikrofon-Zugriff verweigert',
+    callMicDeniedAlert: 'Mikrofonzugriff wurde verweigert. Bitte in den Browser-Einstellungen für diese Seite erlauben.',
+    callNoSupport: 'Sprachanrufe werden von diesem Browser nicht unterstützt. Bitte Chrome oder Edge verwenden (auf dem iPhone: Safari unterstützt das leider nicht zuverlässig).',
+    callError: (e) => `Fehler: ${e}`,
+    callErrorShort: 'Fehler',
+    callConnectionError: (e) => `Verbindungsfehler: ${e}`,
+    thinking: (name) => `${name} denkt nach …`,
+    thinkingCall: (name) => `${name} denkt nach…`,
+    noReply: '(keine Antwort erhalten)',
+    replyError: (e) => `Hmm, ich konnte gerade nicht antworten. (${e})`,
+    statusReady: 'bereit',
+    statusTyping: 'tippt…',
+    statusLoggedOut: 'nicht eingeloggt',
+    statusConnError: 'Verbindungsfehler',
+    imageAlt: 'Bild',
+    imagePreviewAlt: 'Vorschau',
+    imageChooseAlert: 'Bitte eine Bilddatei auswählen.',
+    imageTooBigAlert: 'Das Bild ist zu groß (max. 4 MB).',
+    resetTitle: 'Zurücksetzen',
+    personalityLabel: 'Persönlichkeit (optional, eigene Worte statt Standard)',
+    personalityPlaceholder: (name) => `z.B. "Du bist ${name}. Ton: ... Fokus: ..."`,
+    connectionTitle: 'Verbindung (dein eigener Worker)',
+    connectionNotSet: '(nicht eingerichtet)',
+    changeWorkerUrl: 'Worker-URL ändern',
+    voiceSettingTitle: 'Sprachausgabe (Stimme im Chat/Anruf)',
+    voiceEnLabel: 'Englisch (natürlicher)',
+    voiceDeLabel: 'Deutsch (Browser)',
+    voiceEnNote: 'Klingt natürlicher, liest Text mit englischer Aussprache vor.',
+    voiceDeNote: 'Spricht mit korrekter Aussprache deiner Sprache, klingt aber robotischer (Browser-eigene Stimme).',
+    languageSettingTitle: 'Sprache der App & KI-Antworten',
+    dangerZoneTitle: 'Bei Fehlern (z.B. "HTTP 413" oder sinnlose lange Antworten)',
+    clearHistoryBtn: 'Kompletten Chatverlauf löschen',
+    clearHistoryConfirm: 'Wirklich den gesamten Chatverlauf aller Personen löschen?',
+    voicesAvailableTitle: 'Verfügbare Stimmen auf diesem Gerät',
+    voicesNone: 'Keine gefunden (falls du gerade neue Stimmen heruntergeladen hast: Einstellungen einmal schließen und neu öffnen).',
+    oldImageRemoved: '[altes Bild aus Verlauf entfernt]',
+    truncatedNote: '\n[…gekürzt]',
+    thinkingTruncatedFallback: 'Sorry, meine Antwort ist mir zu lang/komplex geraten und wurde abgeschnitten. Magst du die Frage nochmal kürzer stellen?',
+  },
+  en: {
+    langTitle: 'Deutsch oder English?',
+    setupTitle: "Hey, I'm Lina 👋",
+    setupIntro: "Before we start, you need your own free Cloudflare Worker to connect this page to the AI. Takes about 10 minutes, one-time, no coding needed.",
+    setupStep1: 'Create a free Cloudflare Worker: <a href="https://dash.cloudflare.com" target="_blank" rel="noopener">dash.cloudflare.com</a> → Workers &amp; Pages → create a Worker → paste the code from <code>worker/worker.js</code> → Deploy.',
+    setupStep2: 'Get a free Groq key: <a href="https://console.groq.com/keys" target="_blank" rel="noopener">console.groq.com/keys</a> → in the Worker, under Settings → Variables and Secrets, add it as <code>GROQ_API_KEY</code>.',
+    setupStep3: "Enter your Worker URL below (top of the Worker page, ends in <code>.workers.dev</code>) - done. Everything else (renaming agents, connecting a calendar) I'll show you in Settings.",
+    setupWorkerLabel: 'Your Worker URL (from Cloudflare)',
+    setupAccessLabel: 'Access code (only if you set one up)',
+    setupSubmit: "Let's go",
+    loginTitle: 'Access Code',
+    loginIntro: 'Please enter the access code to chat with Lina & Team.',
+    loginPlaceholder: 'Access code',
+    loginSubmit: 'Continue',
+    loginWrongCode: 'Wrong access code. Please try again.',
+    settingsMenuBtn: '⚙️ Settings',
+    settingsTitle: 'Settings',
+    back: '← Back',
+    menuTitle: 'Menu',
+    callTitle: 'Call',
+    muteTitle: 'Voice on/off',
+    imageAttachedLabel: 'Photo will be sent',
+    removeTitle: 'Remove',
+    attachTitle: 'Send photo',
+    composerPlaceholder: 'Write something…',
+    composerPlaceholderTeam: 'Ask the whole team…',
+    composerPlaceholderPersona: (name) => `Message ${name}…`,
+    hangupTitle: 'Hang up',
+    callConnecting: 'Connecting…',
+    callListening: 'Listening…',
+    callSpeaking: 'speaking…',
+    callConnected: 'Connected',
+    callMicDenied: 'Microphone access denied',
+    callMicDeniedAlert: 'Microphone access was denied. Please allow it in your browser settings for this page.',
+    callNoSupport: "Voice calls aren't supported in this browser. Please use Chrome or Edge (on iPhone: Safari unfortunately doesn't support this reliably).",
+    callError: (e) => `Error: ${e}`,
+    callErrorShort: 'Error',
+    callConnectionError: (e) => `Connection error: ${e}`,
+    thinking: (name) => `${name} is thinking …`,
+    thinkingCall: (name) => `${name} is thinking…`,
+    noReply: '(no response received)',
+    replyError: (e) => `Hmm, I couldn't respond right now. (${e})`,
+    statusReady: 'ready',
+    statusTyping: 'typing…',
+    statusLoggedOut: 'not logged in',
+    statusConnError: 'Connection error',
+    imageAlt: 'Photo',
+    imagePreviewAlt: 'Preview',
+    imageChooseAlert: 'Please choose an image file.',
+    imageTooBigAlert: 'The image is too large (max 4 MB).',
+    resetTitle: 'Reset',
+    personalityLabel: 'Personality (optional, your own words instead of default)',
+    personalityPlaceholder: (name) => `e.g. "You are ${name}. Tone: ... Focus: ..."`,
+    connectionTitle: 'Connection (your own Worker)',
+    connectionNotSet: '(not set up)',
+    changeWorkerUrl: 'Change Worker URL',
+    voiceSettingTitle: 'Voice output (voice in chat/call)',
+    voiceEnLabel: 'English (natural)',
+    voiceDeLabel: 'German (browser)',
+    voiceEnNote: 'Sounds natural, reads text aloud in your chosen language.',
+    voiceDeNote: 'Uses your device’s built-in voice - more robotic, but always available offline.',
+    languageSettingTitle: 'App & AI reply language',
+    dangerZoneTitle: 'If something breaks (e.g. "HTTP 413" or garbled long replies)',
+    clearHistoryBtn: 'Clear entire chat history',
+    clearHistoryConfirm: "Really delete the entire chat history for everyone?",
+    voicesAvailableTitle: 'Available voices on this device',
+    voicesNone: 'None found (if you just downloaded new voices: close and reopen Settings once).',
+    oldImageRemoved: '[old photo removed from history]',
+    truncatedNote: '\n[…truncated]',
+    thinkingTruncatedFallback: "Sorry, my reply got too long/complex and was cut off. Mind asking again a bit shorter?",
+  },
+};
+
+function t(key, ...args) {
+  const dict = STRINGS[uiLang === 'en' ? 'en' : 'de'];
+  const val = dict[key];
+  if (typeof val === 'function') return val(...args);
+  return val !== undefined ? val : key;
+}
+
+// ---- Konfiguration ----
+// WORKER_URL wird NICHT im Code eingetragen, sondern beim ersten Öffnen
+// über den Ersteinrichtungs-Screen (#setupScreen) abgefragt und in
+// localStorage gespeichert - diese Datei kann so 1:1 weitergegeben werden,
+// jeder trägt seinen eigenen Worker ein, ohne Code anzufassen.
+let WORKER_URL = localStorage.getItem('lina_worker_url') || '';
+const MAX_IMAGE_BYTES = 4 * 1024 * 1024;
+// Verlauf begrenzen, damit die Anfrage nicht unbegrenzt wächst (führte zu
+// HTTP 413 "Payload Too Large", sobald genug Nachrichten/Bilder/eine sehr
+// lange Antwort im Verlauf standen).
+const MAX_STORED_MESSAGES = 40; // wie viel lokal pro Person gespeichert bleibt
+const MAX_SENT_MESSAGES = 16;   // wie viel davon pro Anfrage an den Worker geht
+const MAX_SENT_TEXT_CHARS = 4000; // einzelne überlange Nachrichten kappen
+
+// ---- Team ----
+// Namen/Rollen/Begrüßungen sind pro Sprache getrennt (PERSONA_TEXT), Avatar/
+// Farbe/Stimm-Zuordnung sind sprachunabhängig (PERSONA_META). PERSONAS wird
+// aus beidem zusammengebaut und bei jedem Sprachwechsel neu aufgebaut.
+const PERSONA_TEXT = {
+  de: {
+    lina: { name: 'Lina', tabLabel: '💬 Lina', role: 'Persönliche Assistentin',
+      greeting: 'Hey, ich bin Lina 👋 Frag mich einfach etwas, schick mir ein Bild, oder ruf mich an.' },
+    it: { name: 'IT-Chef', tabLabel: '🖥️ IT-Chef', role: 'Technik & Entwicklung',
+      greeting: 'IT-Chef hier 🖥️ Frag mich zu Code, Architektur oder Technik-Themen.' },
+    marketing: { name: 'Marketing-Chef', tabLabel: '📈 Marketing', role: 'Marketing & Strategie',
+      greeting: 'Marketing-Chef hier 📈 Lass uns über Positionierung, Zielgruppen oder Kampagnen sprechen.' },
+    support: { name: 'Support-Chef', tabLabel: '🎧 Support', role: 'Kundenservice & Support',
+      greeting: 'Support-Chef hier 🎧 Frag mich zu Kundenerfahrung, Support-Prozessen oder Nutzerproblemen.' },
+    team: { name: 'Team-Meeting', tabLabel: '👥 Team-Meeting', role: 'Alle zusammen',
+      greeting: 'Willkommen im Team-Meeting 👥 Frag etwas — die passenden Personen antworten.' },
+  },
+  en: {
+    lina: { name: 'Lina', tabLabel: '💬 Lina', role: 'Personal Assistant',
+      greeting: "Hey, I'm Lina 👋 Just ask me something, send a photo, or give me a call." },
+    it: { name: 'IT Lead', tabLabel: '🖥️ IT Lead', role: 'Tech & Engineering',
+      greeting: 'IT Lead here 🖥️ Ask me about code, architecture, or tech topics.' },
+    marketing: { name: 'Marketing Lead', tabLabel: '📈 Marketing', role: 'Marketing & Strategy',
+      greeting: "Marketing Lead here 📈 Let's talk positioning, audiences, or campaigns." },
+    support: { name: 'Support Lead', tabLabel: '🎧 Support', role: 'Customer Service & Support',
+      greeting: 'Support Lead here 🎧 Ask me about customer experience, support processes, or user issues.' },
+    team: { name: 'Team Meeting', tabLabel: '👥 Team Meeting', role: 'Everyone together',
+      greeting: 'Welcome to the team meeting 👥 Ask something — the right people will answer.' },
+  },
+};
+
+// voice: bevorzugte Stimmnamen (je nachdem was Browser/Gerät anbietet) +
+// Tonhöhe/Tempo als verlässlicher Unterschied, falls nur 1-2 Stimmen
+// verfügbar sind (Web Speech API kann pro Gerät stark variieren). Werden
+// aktuell eh nur für die einheitliche Lina-Stimme im Browser-Fallback
+// benutzt (siehe speakFallback), pro Sprache getrennte Namenslisten.
+const VOICE_NAMES_BY_LANG = {
+  de: ['petra', 'anna', 'helena', 'female', 'samantha', 'google deutsch', 'martina', 'katja'],
+  en: ['samantha', 'zira', 'karen', 'susan', 'female', 'google us english'],
+};
+
+const PERSONA_META = {
+  lina: { avatarType: 'img', avatar: 'icon-192.png', color: '#00A98F', voicePitch: 1.1, voiceRate: 1.0 },
+  it: { avatarType: 'emoji', avatar: '🖥️', color: '#3E6FB0', voicePitch: 1.1, voiceRate: 1.0 },
+  marketing: { avatarType: 'emoji', avatar: '📈', color: '#D98A2B', voicePitch: 1.1, voiceRate: 1.0 },
+  support: { avatarType: 'emoji', avatar: '🎧', color: '#8E5FC7', voicePitch: 1.1, voiceRate: 1.0 },
+  team: { avatarType: 'emoji', avatar: '👥', color: '#4A4640', voicePitch: 1.1, voiceRate: 1.0 },
+};
+
+const PERSONA_ORDER = ['lina', 'it', 'marketing', 'support', 'team'];
+
+let PERSONAS = {};
+// NAME_TO_KEY bleibt an die festen Basis-Namen der aktuellen Sprache
+// gebunden (nicht umbenannt) - die API/das Modell kennt nur diese Namen im
+// "Name: Text"-Team-Format.
+let NAME_TO_KEY = {};
+
+function rebuildPersonas() {
+  const lang = uiLang === 'en' ? 'en' : 'de';
+  const text = PERSONA_TEXT[lang];
+  PERSONAS = {};
+  PERSONA_ORDER.forEach(k => {
+    const meta = PERSONA_META[k];
+    PERSONAS[k] = {
+      ...text[k],
+      avatarType: meta.avatarType,
+      avatar: meta.avatar,
+      color: meta.color,
+      voice: { names: VOICE_NAMES_BY_LANG[lang], pitch: meta.voicePitch, rate: meta.voiceRate },
+    };
+  });
+  NAME_TO_KEY = Object.fromEntries(
+    PERSONA_ORDER.filter(k => k !== 'team').map(k => [PERSONAS[k].name, k])
+  );
+}
+rebuildPersonas();
+
+let activeTab = localStorage.getItem('lina_active_tab') || 'lina';
+if (!PERSONAS[activeTab]) activeTab = 'lina';
+
+// ---- Persona-Anpassungen (Name/Profilbild, pro Person überschreibbar) ----
+let personaOverrides = {};
+try { personaOverrides = JSON.parse(localStorage.getItem('lina_persona_overrides') || '{}'); } catch (e) {}
+
+function savePersonaOverrides() {
+  localStorage.setItem('lina_persona_overrides', JSON.stringify(personaOverrides));
+}
+
+function getPersona(key) {
+  const base = PERSONAS[key];
+  const ov = personaOverrides[key];
+  if (!ov) return base;
+  return {
+    ...base,
+    name: ov.name && ov.name.trim() ? ov.name.trim() : base.name,
+    avatarType: ov.avatarDataUrl ? 'img' : base.avatarType,
+    avatar: ov.avatarDataUrl || base.avatar,
+    systemPrompt: ov.systemPrompt && ov.systemPrompt.trim() ? ov.systemPrompt.trim() : null,
+  };
+}
+
+const messagesEl = document.getElementById('messages');
+const form = document.getElementById('composer');
+const input = document.getElementById('input');
+const statusEl = document.getElementById('status');
+const muteBtn = document.getElementById('mute');
+const attachBtn = document.getElementById('attach');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+const imagePreviewImg = document.getElementById('imagePreviewImg');
+const removeImageBtn = document.getElementById('removeImage');
+const headerAvatarEl = document.getElementById('headerAvatar');
+const headerTitleEl = document.getElementById('headerTitle');
+
+let histories = loadHistories();
+let muted = localStorage.getItem('lina_muted') === 'true';
+// 'en' = Groq-Stimme (klingt natürlich, spricht Deutsch mit englischem Akzent)
+// 'de' = Browser-eigene deutsche Stimme (korrekte Aussprache, klingt robotischer)
+let voiceLang = localStorage.getItem('lina_voice_lang') === 'de' ? 'de' : 'en';
+let pendingImage = null; // { mediaType, base64, dataUrl }
+
+// ---- Zugangscode ----
+let accessCode = localStorage.getItem('lina_access_code') || '';
+const loginScreen = document.getElementById('loginScreen');
+const loginForm = document.getElementById('loginForm');
+const accessCodeInput = document.getElementById('accessCodeInput');
+const loginError = document.getElementById('loginError');
+
+function showLogin(errorKey) {
+  loginScreen.classList.add('active');
+  if (errorKey) {
+    loginError.textContent = t(errorKey);
+    loginError.style.display = 'block';
+  } else {
+    loginError.style.display = 'none';
+  }
+  accessCodeInput.value = '';
+  setTimeout(() => accessCodeInput.focus(), 50);
+}
+
+function hideLogin() {
+  loginScreen.classList.remove('active');
+}
+
+loginForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const val = accessCodeInput.value.trim();
+  if (!val) return;
+  accessCode = val;
+  localStorage.setItem('lina_access_code', accessCode);
+  hideLogin();
+});
+
+// ---- Ersteinrichtung (Worker-URL) - läuft VOR dem Login, weil ohne Worker
+// noch nichts geprüft werden kann. So kann diese index.html unverändert an
+// andere weitergegeben werden: jeder trägt beim ersten Öffnen seine eigene
+// Worker-URL ein, ohne Code anzufassen.
+const setupScreen = document.getElementById('setupScreen');
+const setupStepsEl = document.getElementById('setupSteps');
+const setupForm = document.getElementById('setupForm');
+const setupWorkerUrlInput = document.getElementById('setupWorkerUrl');
+const setupAccessCodeInput = document.getElementById('setupAccessCode');
+
+function showSetup() { setupScreen.classList.add('active'); }
+function hideSetup() { setupScreen.classList.remove('active'); }
+
+function proceedAfterLanguage() {
+  if (!WORKER_URL) {
+    showSetup();
+  } else if (!accessCode) {
+    showLogin();
+  }
+}
+
+setupForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const url = setupWorkerUrlInput.value.trim();
+  if (!url) return;
+  WORKER_URL = url;
+  localStorage.setItem('lina_worker_url', url);
+  const code = setupAccessCodeInput.value.trim();
+  if (code) {
+    accessCode = code;
+    localStorage.setItem('lina_access_code', accessCode);
+  }
+  hideSetup();
+  if (!accessCode) showLogin();
+});
+
+// ---- Sprachwahl (allererster Schritt, noch vor der Worker-Einrichtung) ----
+const langScreen = document.getElementById('langScreen');
+const langBtnDe = document.getElementById('langBtnDe');
+const langBtnEn = document.getElementById('langBtnEn');
+
+function chooseLanguage(lang) {
+  uiLang = lang;
+  localStorage.setItem('lina_ui_lang', lang);
+  rebuildPersonas();
+  langScreen.classList.remove('active');
+  applyI18n();
+  applyPersonaChrome();
+  renderActiveTab();
+  renderDrawer();
+  proceedAfterLanguage();
+}
+
+langBtnDe.addEventListener('click', () => chooseLanguage('de'));
+langBtnEn.addEventListener('click', () => chooseLanguage('en'));
+
+if (!uiLang) {
+  langScreen.classList.add('active');
+} else {
+  proceedAfterLanguage();
+}
+
+// Setzt alle statischen UI-Texte in der aktuell gewählten Sprache. Wird
+// einmal beim Start aufgerufen (weiter unten) und jedes Mal bei einem
+// Sprachwechsel in den Einstellungen.
+function applyI18n() {
+  document.documentElement.lang = uiLang === 'en' ? 'en' : 'de';
+  const setText = (id, key, ...args) => { const el = document.getElementById(id); if (el) el.textContent = t(key, ...args); };
+  const setPlaceholder = (id, key, ...args) => { const el = document.getElementById(id); if (el) el.placeholder = t(key, ...args); };
+  const setTitle = (id, key, ...args) => { const el = document.getElementById(id); if (el) el.title = t(key, ...args); };
+
+  setText('setupTitle', 'setupTitle');
+  setText('setupIntro', 'setupIntro');
+  setText('setupWorkerLabel', 'setupWorkerLabel');
+  setText('setupAccessLabel', 'setupAccessLabel');
+  setText('setupSubmitBtn', 'setupSubmit');
+  setupStepsEl.innerHTML = `
+    <div class="setup-step"><div class="num">1</div><div>${t('setupStep1')}</div></div>
+    <div class="setup-step"><div class="num">2</div><div>${t('setupStep2')}</div></div>
+    <div class="setup-step"><div class="num">3</div><div>${t('setupStep3')}</div></div>
+  `;
+
+  setText('loginTitle', 'loginTitle');
+  setText('loginIntro', 'loginIntro');
+  setPlaceholder('accessCodeInput', 'loginPlaceholder');
+  setText('loginSubmitBtn', 'loginSubmit');
+
+  setText('openSettings', 'settingsMenuBtn');
+  setText('settingsTitle', 'settingsTitle');
+  setText('closeSettings', 'back');
+  setTitle('menuToggle', 'menuTitle');
+  setTitle('call', 'callTitle');
+  setTitle('mute', 'muteTitle');
+  setText('imageAttachedLabel', 'imageAttachedLabel');
+  setTitle('removeImage', 'removeTitle');
+  setTitle('attach', 'attachTitle');
+  setTitle('hangup', 'hangupTitle');
+  const ipImg = document.getElementById('imagePreviewImg');
+  if (ipImg) ipImg.alt = t('imagePreviewAlt');
+
+  const callStatusInit = document.getElementById('callStatus');
+  // callActive wird erst im Anruf-Modus-Abschnitt weiter unten deklariert -
+  // beim allerersten Aufruf hier ist noch kein Anruf aktiv, harmlos zu setzen.
+  if (callStatusInit) callStatusInit.textContent = t('callConnecting');
+
+  if (typeof statusEl !== 'undefined' && statusEl && !statusEl.classList.contains('offline')) {
+    statusEl.textContent = t('statusReady');
+  }
+  if (typeof input !== 'undefined' && input && typeof activeTab !== 'undefined') {
+    input.placeholder = activeTab === 'team' ? t('composerPlaceholderTeam') : t('composerPlaceholderPersona', getPersona(activeTab).name);
+  }
+}
+
+function loadHistories() {
+  const raw = localStorage.getItem('lina_team_history');
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw);
+      PERSONA_ORDER.forEach(k => {
+        if (!Array.isArray(parsed[k])) parsed[k] = [];
+        capHistory(parsed[k]);
+      });
+      return parsed;
+    } catch (e) { /* fällt durch auf leeren Zustand */ }
+  }
+  const base = { lina: [], it: [], marketing: [], support: [], team: [] };
+  // Migration von der alten Einzel-Lina-Version
+  const legacy = localStorage.getItem('lina_history');
+  if (legacy) {
+    try { base.lina = JSON.parse(legacy); } catch (e) {}
+  }
+  return base;
+}
+
+function saveHistories() {
+  try {
+    localStorage.setItem('lina_team_history', JSON.stringify(histories));
+  } catch (e) {
+    let trimmed = false;
+    PERSONA_ORDER.forEach(k => {
+      while (histories[k].length > 4) { histories[k].shift(); trimmed = true; }
+    });
+    if (trimmed) {
+      try { localStorage.setItem('lina_team_history', JSON.stringify(histories)); } catch (e2) {}
+    }
+  }
+}
+
+function setAvatarBadge(el, persona) {
+  el.innerHTML = '';
+  el.style.setProperty('--badge-color', persona.color);
+  if (persona.avatarType === 'img') {
+    const img = document.createElement('img');
+    img.src = persona.avatar;
+    img.alt = persona.name;
+    el.appendChild(img);
+  } else {
+    el.textContent = persona.avatar;
+  }
+}
+
+function applyPersonaChrome() {
+  const p = getPersona(activeTab);
+  document.documentElement.style.setProperty('--persona', p.color);
+  headerTitleEl.textContent = p.name;
+  setAvatarBadge(headerAvatarEl, p);
+  document.querySelectorAll('.drawer-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.persona === activeTab);
+  });
+  input.placeholder = activeTab === 'team' ? t('composerPlaceholderTeam') : t('composerPlaceholderPersona', p.name);
+}
+
+function contentToDisplay(content) {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    const textBlock = content.find(b => b.type === 'text');
+    const imageBlock = content.find(b => b.type === 'image');
+    return {
+      text: textBlock ? textBlock.text : '',
+      imageDataUrl: imageBlock ? ('data:' + imageBlock.source.media_type + ';base64,' + imageBlock.source.data) : null,
+    };
+  }
+  return '';
+}
+
+// Zerlegt eine Team-Antwort ("Lina: ...\nIT-Chef: ...") in einzelne Wortmeldungen
+function parseTeamReply(text) {
+  const lines = String(text || '').split('\n');
+  const names = Object.keys(NAME_TO_KEY);
+  const segments = [];
+  let current = null;
+  lines.forEach(line => {
+    const match = names.find(name => line.startsWith(name + ':'));
+    if (match) {
+      if (current) segments.push(current);
+      current = { name: match, text: line.slice(match.length + 1).trim() };
+    } else if (current) {
+      current.text += (line ? (current.text ? '\n' : '') + line : '');
+    } else if (line.trim()) {
+      current = { name: null, text: line.trim() };
+    }
+  });
+  if (current) segments.push(current);
+  return segments.filter(s => s.text && s.text.trim());
+}
+
+function renderTeamReply(text, scroll = true) {
+  const segments = parseTeamReply(text);
+  if (segments.length === 0) {
+    addBubble('lina', text, scroll, 'team', getPersona('team').name);
+    return;
+  }
+  segments.forEach(seg => {
+    const key = seg.name ? (NAME_TO_KEY[seg.name] || 'team') : 'team';
+    addBubble('lina', seg.text, scroll, key, getPersona(key).name);
+  });
+}
+
+function renderActiveTab() {
+  messagesEl.innerHTML = '';
+  const hist = histories[activeTab];
+  if (hist.length === 0) {
+    addBubble('lina', PERSONAS[activeTab].greeting, false, activeTab);
+  } else {
+    hist.forEach(m => {
+      if (m.role === 'assistant') {
+        if (activeTab === 'team' && typeof m.content === 'string') {
+          renderTeamReply(m.content, false);
+        } else {
+          addBubble('lina', contentToDisplay(m.content), false, activeTab);
+        }
+      } else {
+        addBubble('user', contentToDisplay(m.content), false);
+      }
+    });
+  }
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+function addBubble(who, content, scroll = true, personaKey = 'lina', label = null) {
+  const classes = who.split(' ');
+  const row = document.createElement('div');
+  row.className = 'msg-row ' + who;
+
+  if (classes[0] === 'lina') {
+    const p = getPersona(personaKey) || getPersona('lina');
+    const avatar = document.createElement('div');
+    avatar.className = 'msg-avatar-badge';
+    setAvatarBadge(avatar, p);
+    row.appendChild(avatar);
+  }
+
+  const bubble = document.createElement('div');
+  bubble.className = 'msg ' + who;
+  if (classes[0] === 'lina') {
+    bubble.style.setProperty('--badge-color', (getPersona(personaKey) || getPersona('lina')).color);
+  }
+
+  if (label) {
+    const labelEl = document.createElement('div');
+    labelEl.className = 'msg-label';
+    labelEl.textContent = label;
+    bubble.appendChild(labelEl);
+  }
+
+  const text = typeof content === 'string' ? content : (content.text || '');
+  const imageDataUrl = typeof content === 'string' ? null : content.imageDataUrl;
+
+  if (imageDataUrl) {
+    bubble.classList.add('has-image');
+    const img = document.createElement('img');
+    img.src = imageDataUrl;
+    img.className = 'msg-image';
+    img.alt = t('imageAlt');
+    bubble.appendChild(img);
+  }
+  if (text || !imageDataUrl) {
+    const caption = document.createElement('div');
+    caption.className = 'msg-caption';
+    caption.textContent = text;
+    bubble.appendChild(caption);
+  }
+
+  row.appendChild(bubble);
+  messagesEl.appendChild(row);
+  if (scroll) messagesEl.scrollTop = messagesEl.scrollHeight;
+  return row;
+}
+
+// speak(text, onEnd, force, personaKey) - force=true spricht auch wenn
+// stummgeschaltet (Anruf-Modus). Holt echtes, natürlich klingendes Audio
+// von ElevenLabs (über den Worker); fällt bei Fehlern/aufgebrauchtem
+// Kontingent automatisch auf die Browser-Stimme zurück.
+let currentAudio = null;
+
+// iOS/Safari erlaubt audio.play() nur, wenn es direkt aus einem Fingertipp
+// ausgelöst wird. Im Anruf-Modus kommt die Antwort aber über Spracherkennung
+// (kein Tap), also blockiert Safari die echte Stimme und die App fällt
+// still auf die Browser-Ersatzstimme zurück. Fix: beim allerersten Tap
+// irgendwo auf der Seite ein winziges stummes Audio abspielen - das
+// "entsperrt" programmatisches audio.play() für den Rest der Sitzung.
+let audioUnlocked = false;
+function unlockAudioPlayback() {
+  if (audioUnlocked) return;
+  audioUnlocked = true;
+  try {
+    const silence = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
+    silence.play().catch(() => {});
+  } catch (e) {}
+}
+document.addEventListener('click', unlockAudioPlayback, { once: true });
+document.addEventListener('touchend', unlockAudioPlayback, { once: true });
+
+// Stoppt jede laufende Sprachausgabe sofort (Groq-Audio + Browser-Fallback) -
+// zentrale Stelle, damit "Auflegen" und "Unterbrechen beim Reinreden" nie
+// vergessen, eine der beiden Audioquellen zu stoppen.
+function stopSpeaking() {
+  if (currentAudio) { try { currentAudio.pause(); } catch (e) {} currentAudio = null; }
+  if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+}
+
+async function speak(text, onEnd, force = false, personaKey = 'lina') {
+  if (muted && !force) { if (onEnd) onEnd(); return; }
+  stopSpeaking();
+
+  if (voiceLang === 'de') { speakFallback(text, onEnd, personaKey); return; }
+
+  try {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
+      body: JSON.stringify({ action: 'speak', text, persona: personaKey }),
+    });
+    if (!res.ok) throw new Error('TTS HTTP ' + res.status);
+    const data = await res.json();
+    if (!data.audio) throw new Error('Kein Audio erhalten');
+
+    const audio = new Audio(`data:${data.mime};base64,${data.audio}`);
+    currentAudio = audio;
+    audio.onended = () => { currentAudio = null; if (onEnd) onEnd(); };
+    audio.onerror = () => { currentAudio = null; speakFallback(text, onEnd, personaKey); };
+    await audio.play();
+  } catch (err) {
+    speakFallback(text, onEnd, personaKey);
+  }
+}
+
+// Locale für Spracherkennung + Browser-Sprachausgabe, abhängig von der
+// gewählten UI-Sprache (wichtig für Spracherkennung: sonst versteht der
+// Browser englisch Gesprochenes nicht, wenn er auf Deutsch lauscht).
+const RECOGNITION_LOCALE = { de: 'de-DE', en: 'en-US' };
+function currentLocale() { return RECOGNITION_LOCALE[uiLang === 'en' ? 'en' : 'de']; }
+
+// Browser-eigene Sprachausgabe als Rückfallebene (falls die Groq-Stimme mal
+// nicht erreichbar ist). Nutzt bewusst für ALLE Personas dieselbe Stimme
+// wie Lina (einheitliche Stimme statt pro Person eine eigene, auch im
+// Rückfall-Modus).
+function speakFallback(text, onEnd, personaKey) {
+  if (!('speechSynthesis' in window)) { if (onEnd) onEnd(); return; }
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  const locale = currentLocale();
+  utter.lang = locale;
+  const vc = PERSONAS.lina.voice;
+  utter.pitch = vc.pitch;
+  utter.rate = vc.rate;
+  const voices = window.speechSynthesis.getVoices();
+  const localePrefix = locale.split('-')[0].toLowerCase();
+  let voice = voices.find(v => v.lang.toLowerCase().startsWith(localePrefix) &&
+    vc.names.some(n => v.name.toLowerCase().includes(n)));
+  if (!voice) voice = voices.find(v => v.lang.toLowerCase().startsWith(localePrefix));
+  if (voice) utter.voice = voice;
+  if (onEnd) utter.onend = onEnd;
+  window.speechSynthesis.speak(utter);
+}
+
+// Spricht eine Team-Antwort segmentweise, jede Person mit ihrer eigenen
+// Stimme. uiCallback (optional) wird vor jedem Segment aufgerufen, für
+// Anruf-Untertitel o.ä.
+function speakSegmentsQueue(segments, idx, onAllDone, uiCallback, force = false) {
+  if (idx >= segments.length) { if (onAllDone) onAllDone(); return; }
+  const seg = segments[idx];
+  const key = seg.name ? (NAME_TO_KEY[seg.name] || 'team') : 'team';
+  if (uiCallback) uiCallback(seg, key);
+  const spoken = seg.name ? `${getPersona(key).name} sagt: ${seg.text}` : seg.text;
+  speak(spoken, () => speakSegmentsQueue(segments, idx + 1, onAllDone, uiCallback, force), force, key);
+}
+
+function speakTeamReply(text) {
+  speakSegmentsQueue(parseTeamReply(text), 0);
+}
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {
+    if (settingsScreen.classList.contains('active')) renderSettings();
+  };
+}
+
+function updateMuteBtn() {
+  muteBtn.textContent = muted ? '🔇' : '🔊';
+  muteBtn.classList.toggle('muted', muted);
+}
+
+muteBtn.addEventListener('click', () => {
+  muted = !muted;
+  localStorage.setItem('lina_muted', muted);
+  updateMuteBtn();
+  if (muted) stopSpeaking();
+});
+
+// ---- Menü-Schublade ----
+const menuToggle = document.getElementById('menuToggle');
+const menuOverlay = document.getElementById('menuOverlay');
+const drawer = document.getElementById('drawer');
+const drawerList = document.getElementById('drawerList');
+
+function renderDrawer() {
+  drawerList.innerHTML = '';
+  PERSONA_ORDER.forEach(key => {
+    const p = getPersona(key);
+    const item = document.createElement('div');
+    item.className = 'drawer-item' + (key === activeTab ? ' active' : '');
+    item.dataset.persona = key;
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar-badge';
+    setAvatarBadge(avatar, p);
+    item.appendChild(avatar);
+
+    const textWrap = document.createElement('div');
+    textWrap.className = 'drawer-item-text';
+    const nameEl = document.createElement('div');
+    nameEl.className = 'drawer-item-name';
+    nameEl.textContent = p.name;
+    const roleEl = document.createElement('div');
+    roleEl.className = 'drawer-item-role';
+    roleEl.textContent = PERSONAS[key].role;
+    textWrap.appendChild(nameEl);
+    textWrap.appendChild(roleEl);
+    item.appendChild(textWrap);
+
+    item.addEventListener('click', () => {
+      if (callActive) endCall();
+      activeTab = key;
+      localStorage.setItem('lina_active_tab', activeTab);
+      applyPersonaChrome();
+      renderActiveTab();
+      closeDrawer();
+    });
+
+    drawerList.appendChild(item);
+  });
+}
+
+function openDrawer() {
+  renderDrawer();
+  drawer.classList.add('active');
+  menuOverlay.classList.add('active');
+}
+
+function closeDrawer() {
+  drawer.classList.remove('active');
+  menuOverlay.classList.remove('active');
+}
+
+menuToggle.addEventListener('click', () => {
+  if (drawer.classList.contains('active')) closeDrawer(); else openDrawer();
+});
+menuOverlay.addEventListener('click', closeDrawer);
+
+// ---- Einstellungen (Profilbild/Name pro Person) ----
+const settingsScreen = document.getElementById('settingsScreen');
+const settingsList = document.getElementById('settingsList');
+const openSettingsBtn = document.getElementById('openSettings');
+const closeSettingsBtn = document.getElementById('closeSettings');
+
+function renderSettings() {
+  settingsList.innerHTML = '';
+  renderWorkerUrlSetting();
+  PERSONA_ORDER.forEach(key => {
+    const p = getPersona(key);
+    const row = document.createElement('div');
+    row.className = 'settings-row';
+
+    const topRow = document.createElement('div');
+    topRow.className = 'settings-row-top';
+
+    const avatar = document.createElement('div');
+    avatar.className = 'avatar-badge settings-avatar';
+    setAvatarBadge(avatar, p);
+
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*';
+    fileInput.hidden = true;
+
+    avatar.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+      if (!file.type.startsWith('image/')) { alert(t('imageChooseAlert')); return; }
+      if (file.size > MAX_IMAGE_BYTES) { alert(t('imageTooBigAlert')); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        personaOverrides[key] = personaOverrides[key] || {};
+        personaOverrides[key].avatarDataUrl = reader.result;
+        savePersonaOverrides();
+        setAvatarBadge(avatar, getPersona(key));
+        if (key === activeTab) applyPersonaChrome();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text';
+    nameInput.className = 'settings-name-input';
+    nameInput.value = p.name;
+    nameInput.placeholder = PERSONAS[key].name;
+    nameInput.addEventListener('input', () => {
+      personaOverrides[key] = personaOverrides[key] || {};
+      personaOverrides[key].name = nameInput.value;
+      savePersonaOverrides();
+      if (key === activeTab) applyPersonaChrome();
+    });
+
+    const resetBtn = document.createElement('button');
+    resetBtn.className = 'settings-reset';
+    resetBtn.textContent = '↺';
+    resetBtn.title = t('resetTitle');
+    resetBtn.addEventListener('click', () => {
+      delete personaOverrides[key];
+      savePersonaOverrides();
+      nameInput.value = PERSONAS[key].name;
+      setAvatarBadge(avatar, PERSONAS[key]);
+      if (promptInput) promptInput.value = '';
+      if (key === activeTab) applyPersonaChrome();
+    });
+
+    topRow.appendChild(avatar);
+    topRow.appendChild(fileInput);
+    topRow.appendChild(nameInput);
+    topRow.appendChild(resetBtn);
+    row.appendChild(topRow);
+
+    // Eigene Persönlichkeit in eigenen Worten, ohne Programmieren - wird
+    // 1:1 als System-Prompt an die KI geschickt. Nicht für 'team' (das
+    // feste "Name: Text"-Format muss dafür erhalten bleiben).
+    let promptInput = null;
+    if (key !== 'team') {
+      const promptLabel = document.createElement('div');
+      promptLabel.className = 'settings-prompt-label';
+      promptLabel.textContent = t('personalityLabel');
+      row.appendChild(promptLabel);
+
+      promptInput = document.createElement('textarea');
+      promptInput.className = 'settings-prompt-input';
+      promptInput.placeholder = t('personalityPlaceholder', p.name);
+      promptInput.value = (personaOverrides[key] && personaOverrides[key].systemPrompt) || '';
+      promptInput.addEventListener('input', () => {
+        personaOverrides[key] = personaOverrides[key] || {};
+        personaOverrides[key].systemPrompt = promptInput.value;
+        savePersonaOverrides();
+      });
+      row.appendChild(promptInput);
+    }
+
+    settingsList.appendChild(row);
+  });
+
+  renderLanguageSetting();
+  renderVoiceLangSetting();
+  renderVoiceDiagnostics();
+  renderDangerZone();
+}
+
+function renderWorkerUrlSetting() {
+  const box = document.createElement('div');
+  box.className = 'settings-voices';
+
+  const title = document.createElement('div');
+  title.className = 'settings-voices-title';
+  title.textContent = t('connectionTitle');
+  box.appendChild(title);
+
+  const list = document.createElement('div');
+  list.className = 'settings-voices-list';
+  list.style.wordBreak = 'break-all';
+  list.textContent = WORKER_URL || t('connectionNotSet');
+  box.appendChild(list);
+
+  const btn = document.createElement('button');
+  btn.className = 'settings-reset';
+  btn.style.width = '100%';
+  btn.style.marginTop = '8px';
+  btn.textContent = t('changeWorkerUrl');
+  btn.addEventListener('click', () => {
+    closeSettings();
+    setupWorkerUrlInput.value = WORKER_URL;
+    setupAccessCodeInput.value = accessCode;
+    showSetup();
+  });
+  box.appendChild(btn);
+
+  settingsList.appendChild(box);
+}
+
+// Sprache der App & KI-Antworten - separat von der Stimmen-Sprache
+// (voiceLang), die nur regelt, welche Sprachausgabe-Engine benutzt wird.
+function renderLanguageSetting() {
+  const box = document.createElement('div');
+  box.className = 'settings-voices';
+
+  const title = document.createElement('div');
+  title.className = 'settings-voices-title';
+  title.textContent = t('languageSettingTitle');
+  box.appendChild(title);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '8px';
+  row.style.marginTop = '8px';
+
+  const makeBtn = (lang, label) => {
+    const b = document.createElement('button');
+    b.className = 'settings-reset';
+    b.style.flex = '1';
+    b.style.width = 'auto';
+    b.textContent = label;
+    b.style.opacity = uiLang === lang ? '1' : '0.5';
+    b.style.fontWeight = uiLang === lang ? '700' : '400';
+    b.addEventListener('click', () => {
+      if (uiLang === lang) return;
+      uiLang = lang;
+      localStorage.setItem('lina_ui_lang', lang);
+      rebuildPersonas();
+      applyI18n();
+      applyPersonaChrome();
+      renderActiveTab();
+      renderDrawer();
+      renderSettings();
+    });
+    return b;
+  };
+
+  row.appendChild(makeBtn('de', 'Deutsch'));
+  row.appendChild(makeBtn('en', 'English'));
+  box.appendChild(row);
+
+  settingsList.appendChild(box);
+}
+
+function renderVoiceLangSetting() {
+  const box = document.createElement('div');
+  box.className = 'settings-voices';
+
+  const title = document.createElement('div');
+  title.className = 'settings-voices-title';
+  title.textContent = t('voiceSettingTitle');
+  box.appendChild(title);
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.gap = '8px';
+  row.style.marginTop = '8px';
+
+  const makeBtn = (lang, label) => {
+    const b = document.createElement('button');
+    b.className = 'settings-reset';
+    b.style.flex = '1';
+    b.style.width = 'auto';
+    b.textContent = label;
+    b.style.opacity = voiceLang === lang ? '1' : '0.5';
+    b.style.fontWeight = voiceLang === lang ? '700' : '400';
+    b.addEventListener('click', () => {
+      voiceLang = lang;
+      localStorage.setItem('lina_voice_lang', lang);
+      stopSpeaking();
+      renderSettings();
+    });
+    return b;
+  };
+
+  row.appendChild(makeBtn('en', t('voiceEnLabel')));
+  row.appendChild(makeBtn('de', t('voiceDeLabel')));
+  box.appendChild(row);
+
+  const note = document.createElement('div');
+  note.className = 'settings-voices-list';
+  note.style.marginTop = '6px';
+  note.textContent = voiceLang === 'en' ? t('voiceEnNote') : t('voiceDeNote');
+  box.appendChild(note);
+
+  settingsList.appendChild(box);
+}
+
+function renderDangerZone() {
+  const box = document.createElement('div');
+  box.className = 'settings-voices';
+
+  const title = document.createElement('div');
+  title.className = 'settings-voices-title';
+  title.textContent = t('dangerZoneTitle');
+  box.appendChild(title);
+
+  const btn = document.createElement('button');
+  btn.className = 'settings-reset';
+  btn.style.width = '100%';
+  btn.style.marginTop = '8px';
+  btn.textContent = t('clearHistoryBtn');
+  btn.addEventListener('click', () => {
+    if (!confirm(t('clearHistoryConfirm'))) return;
+    histories = { lina: [], it: [], marketing: [], support: [], team: [] };
+    saveHistories();
+    renderActiveTab();
+    closeSettings();
+  });
+  box.appendChild(btn);
+  settingsList.appendChild(box);
+}
+
+function renderVoiceDiagnostics() {
+  const box = document.createElement('div');
+  box.className = 'settings-voices';
+
+  const title = document.createElement('div');
+  title.className = 'settings-voices-title';
+  title.textContent = t('voicesAvailableTitle');
+  box.appendChild(title);
+
+  const list = document.createElement('div');
+  list.className = 'settings-voices-list';
+  const localePrefix = currentLocale().split('-')[0].toLowerCase();
+  const voices = ('speechSynthesis' in window)
+    ? window.speechSynthesis.getVoices().filter(v => v.lang.toLowerCase().startsWith(localePrefix))
+    : [];
+  list.textContent = voices.length
+    ? voices.map(v => v.name).join(', ')
+    : t('voicesNone');
+  box.appendChild(list);
+
+  settingsList.appendChild(box);
+}
+
+function openSettings() {
+  closeDrawer();
+  renderSettings();
+  settingsScreen.classList.add('active');
+}
+
+function closeSettings() {
+  settingsScreen.classList.remove('active');
+  renderDrawer();
+}
+
+openSettingsBtn.addEventListener('click', openSettings);
+closeSettingsBtn.addEventListener('click', closeSettings);
+
+// ---- Bild-Anhang ----
+attachBtn.addEventListener('click', () => imageInput.click());
+
+imageInput.addEventListener('change', () => {
+  const file = imageInput.files[0];
+  imageInput.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/')) {
+    alert(t('imageChooseAlert'));
+    return;
+  }
+  if (file.size > MAX_IMAGE_BYTES) {
+    alert(t('imageTooBigAlert'));
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    const dataUrl = reader.result;
+    const base64 = dataUrl.split(',')[1];
+    pendingImage = { mediaType: file.type, base64, dataUrl };
+    imagePreviewImg.src = dataUrl;
+    imagePreview.style.display = 'flex';
+  };
+  reader.readAsDataURL(file);
+});
+
+removeImageBtn.addEventListener('click', () => {
+  pendingImage = null;
+  imagePreview.style.display = 'none';
+});
+
+// ---- Nachricht an eine Persona schicken ----
+// userContent: was an die API geschickt wird (String oder Content-Block-Array)
+// displayContent: was als Chat-Bubble gerendert wird (String oder {text, imageDataUrl})
+// Baut aus dem (lokal unbegrenzten) Verlauf eine gekappte Kopie fürs
+// Backend: nur die letzten MAX_SENT_MESSAGES Nachrichten, nur das jüngste
+// Bild (ältere Bilder raus), und keine einzelne Nachricht länger als
+// MAX_SENT_TEXT_CHARS. Verändert `hist` selbst nicht.
+function trimHistoryForRequest(hist) {
+  const recent = hist.slice(-MAX_SENT_MESSAGES);
+  let imageKept = false;
+  const out = [];
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const m = recent[i];
+    let content = m.content;
+    if (Array.isArray(content)) {
+      if (content.some(b => b.type === 'image')) {
+        if (imageKept) {
+          const textBlock = content.find(b => b.type === 'text');
+          content = [{ type: 'text', text: ((textBlock && textBlock.text) ? textBlock.text + ' ' : '') + t('oldImageRemoved') }];
+        } else {
+          imageKept = true;
+        }
+      }
+    } else if (typeof content === 'string' && content.length > MAX_SENT_TEXT_CHARS) {
+      content = content.slice(0, MAX_SENT_TEXT_CHARS) + t('truncatedNote');
+    }
+    out.unshift({ role: m.role, content });
+  }
+  return out;
+}
+
+function capHistory(hist) {
+  while (hist.length > MAX_STORED_MESSAGES) hist.shift();
+}
+
+async function askPersona(personaKey, userContent, displayContent) {
+  const hist = histories[personaKey];
+  addBubble('user', displayContent !== undefined ? displayContent : userContent);
+  hist.push({ role: 'user', content: userContent });
+  capHistory(hist);
+  saveHistories();
+
+  const thinkingBubble = addBubble('lina thinking', t('thinking', getPersona(personaKey).name), true, personaKey);
+  statusEl.textContent = t('statusTyping');
+
+  try {
+    const customPrompt = getPersona(personaKey).systemPrompt;
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Access-Code': accessCode },
+      body: JSON.stringify({ messages: trimHistoryForRequest(hist), persona: personaKey, systemPromptOverride: customPrompt || undefined, lang: uiLang === 'en' ? 'en' : 'de' })
+    });
+    if (res.status === 401) {
+      thinkingBubble.remove();
+      localStorage.removeItem('lina_access_code');
+      accessCode = '';
+      statusEl.textContent = t('statusLoggedOut');
+      statusEl.classList.add('offline');
+      showLogin('loginWrongCode');
+      throw new Error('Unauthorized');
+    }
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    thinkingBubble.remove();
+    const reply = data.reply || t('noReply');
+
+    if (personaKey === 'team') {
+      renderTeamReply(reply);
+    } else {
+      addBubble('lina', reply, true, personaKey);
+    }
+
+    hist.push({ role: 'assistant', content: reply });
+    capHistory(hist);
+    saveHistories();
+    statusEl.textContent = t('statusReady');
+    statusEl.classList.remove('offline');
+    return reply;
+  } catch (err) {
+    thinkingBubble.remove();
+    if (err.message !== 'Unauthorized') {
+      addBubble('lina', t('replyError', err.message), true, personaKey);
+      statusEl.textContent = t('statusConnError');
+      statusEl.classList.add('offline');
+    }
+    throw err;
+  }
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const text = input.value.trim();
+  if (!text && !pendingImage) return;
+  input.value = '';
+
+  let userContent, displayContent;
+  if (pendingImage) {
+    userContent = [
+      { type: 'image', source: { type: 'base64', media_type: pendingImage.mediaType, data: pendingImage.base64 } },
+    ];
+    if (text) userContent.push({ type: 'text', text });
+    displayContent = { text, imageDataUrl: pendingImage.dataUrl };
+    pendingImage = null;
+    imagePreview.style.display = 'none';
+  } else {
+    userContent = text;
+    displayContent = text;
+  }
+
+  try {
+    const reply = await askPersona(activeTab, userContent, displayContent);
+    if (activeTab === 'team') {
+      speakTeamReply(reply);
+    } else {
+      speak(reply, undefined, false, activeTab);
+    }
+  } catch (err) {
+    // Fehler wurde bereits als Bubble angezeigt
+  }
+});
+
+applyI18n();
+applyPersonaChrome();
+renderActiveTab();
+updateMuteBtn();
+
+// ---- Anruf-Modus (Mikrofon + gesprochene Antworten) ----
+const callBtn = document.getElementById('call');
+const callOverlay = document.getElementById('callOverlay');
+const callAvatarEl = document.getElementById('callAvatar');
+const callNameEl = document.getElementById('callName');
+const callStatusEl = document.getElementById('callStatus');
+const callCaptionEl = document.getElementById('callCaption');
+const hangupBtn = document.getElementById('hangup');
+
+const SpeechRecognitionCtor = window.SpeechRecognition || window.webkitSpeechRecognition;
+let recognition = null;
+let callActive = false;
+let bargeInRecognition = null;
+
+// Läuft parallel, während die KI spricht, und hört NUR mit, um zu merken,
+// ob Ni reinredet ("Barge-in"). Sobald etwas Verständliches ankommt, wird
+// die KI-Stimme sofort gestoppt und auf normales Zuhören umgeschaltet.
+function stopBargeInListener() {
+  if (bargeInRecognition) {
+    const r = bargeInRecognition;
+    bargeInRecognition = null;
+    r.onresult = null;
+    r.onend = null;
+    r.onerror = null;
+    try { r.stop(); } catch (e) {}
+  }
+}
+
+function startBargeInListener() {
+  if (!SpeechRecognitionCtor || !callActive) return;
+  stopBargeInListener();
+  const r = new SpeechRecognitionCtor();
+  bargeInRecognition = r;
+  r.lang = currentLocale();
+  r.interimResults = true;
+  r.continuous = true;
+  r.onresult = (event) => {
+    const last = event.results[event.results.length - 1];
+    const transcript = last && last[0] ? last[0].transcript.trim() : '';
+    if (transcript.length > 1) {
+      r.onresult = null;
+      r.onend = () => { if (bargeInRecognition === r) bargeInRecognition = null; stopSpeaking(); if (callActive) listenOnce(); };
+      bargeInRecognition = null;
+      try { r.stop(); } catch (e) { stopSpeaking(); if (callActive) listenOnce(); }
+    }
+  };
+  r.onerror = () => {};
+  r.onend = () => { if (bargeInRecognition === r) bargeInRecognition = null; };
+  try { r.start(); } catch (e) { bargeInRecognition = null; }
+}
+
+function setCallState(state) {
+  callOverlay.classList.remove('listening', 'speaking', 'idle');
+  callOverlay.classList.add(state);
+  const labels = { listening: t('callListening'), speaking: t('callSpeaking'), idle: t('callConnected') };
+  callStatusEl.textContent = labels[state] || '';
+}
+
+function setupCallChrome() {
+  const p = getPersona(activeTab);
+  callNameEl.textContent = p.name;
+  callAvatarEl.innerHTML = '';
+  callAvatarEl.classList.remove('emoji');
+  if (p.avatarType === 'img') {
+    const img = document.createElement('img');
+    img.src = p.avatar;
+    img.alt = p.name;
+    img.style.width = '100%'; img.style.height = '100%';
+    img.style.objectFit = 'cover'; img.style.borderRadius = '50%';
+    callAvatarEl.appendChild(img);
+  } else {
+    callAvatarEl.classList.add('emoji');
+    callAvatarEl.textContent = p.avatar;
+  }
+}
+
+function startCall() {
+  if (!SpeechRecognitionCtor) {
+    alert(t('callNoSupport'));
+    return;
+  }
+  if (!WORKER_URL) {
+    showSetup();
+    return;
+  }
+  callActive = true;
+  setupCallChrome();
+  callOverlay.classList.add('active');
+  callCaptionEl.textContent = '';
+  stopSpeaking();
+  listenOnce();
+}
+
+function endCall() {
+  callActive = false;
+  callOverlay.classList.remove('active', 'listening', 'speaking', 'idle');
+  if (recognition) { try { recognition.stop(); } catch (e) {} }
+  stopBargeInListener();
+  stopSpeaking();
+}
+
+function listenOnce() {
+  if (!callActive) return;
+  recognition = new SpeechRecognitionCtor();
+  recognition.lang = currentLocale();
+  recognition.interimResults = true;
+  recognition.continuous = false;
+  let handled = false;
+
+  setCallState('listening');
+  callCaptionEl.textContent = '';
+
+  recognition.onresult = (event) => {
+    let interim = '', final = '';
+    for (let i = event.resultIndex; i < event.results.length; i++) {
+      const transcript = event.results[i][0].transcript;
+      if (event.results[i].isFinal) final += transcript;
+      else interim += transcript;
+    }
+    callCaptionEl.textContent = final || interim;
+    if (final && !handled) {
+      handled = true;
+      recognition.stop();
+      handleCallUtterance(final.trim());
+    }
+  };
+
+  recognition.onerror = (event) => {
+    if (!callActive) return;
+    if (event.error === 'not-allowed' || event.error === 'service-not-allowed') {
+      handled = true;
+      callStatusEl.textContent = t('callMicDenied');
+      endCall();
+      alert(t('callMicDeniedAlert'));
+      return;
+    }
+    if (event.error === 'no-speech' || event.error === 'aborted') {
+      handled = true;
+      if (callActive) listenOnce();
+      return;
+    }
+    handled = true;
+    callStatusEl.textContent = t('callError', event.error);
+    if (callActive) setTimeout(() => { if (callActive) listenOnce(); }, 1500);
+  };
+
+  recognition.onend = () => {
+    if (!handled && callActive) listenOnce();
+  };
+
+  try { recognition.start(); } catch (e) {}
+}
+
+async function handleCallUtterance(text) {
+  if (!text) { if (callActive) listenOnce(); return; }
+  callCaptionEl.textContent = text;
+  setCallState('idle');
+  callStatusEl.textContent = t('thinkingCall', getPersona(activeTab).name);
+  try {
+    const reply = await askPersona(activeTab, text);
+    if (!callActive) return;
+    if (!reply) { if (callActive) listenOnce(); return; }
+    if (activeTab === 'team') {
+      startBargeInListener();
+      speakSegmentsQueue(
+        parseTeamReply(reply), 0,
+        () => { stopBargeInListener(); if (callActive) listenOnce(); },
+        (seg, key) => {
+          callCaptionEl.textContent = (seg.name ? getPersona(key).name + ': ' : '') + seg.text;
+          setCallState('speaking');
+        },
+        true
+      );
+    } else {
+      callCaptionEl.textContent = reply;
+      setCallState('speaking');
+      startBargeInListener();
+      speak(reply, () => { stopBargeInListener(); if (callActive) listenOnce(); }, true, activeTab);
+    }
+  } catch (err) {
+    if (!callActive) return;
+    // Bei falschem/fehlendem Zugangscode zeigt askPersona schon den Login-
+    // Screen - der Anruf soll dann sauber enden statt endlos weiterzuhören.
+    if (err.message === 'Unauthorized') {
+      endCall();
+      return;
+    }
+    callCaptionEl.textContent = t('callConnectionError', err.message);
+    callStatusEl.textContent = t('callErrorShort');
+    setTimeout(() => { if (callActive) listenOnce(); }, 2000);
+  }
+}
+
+callBtn.addEventListener('click', startCall);
+hangupBtn.addEventListener('click', endCall);
+
+// PWA: Service Worker optional weggelassen (keine Offline-Pflicht für diesen Zweck)
+</script>
+</body>
+</html>
