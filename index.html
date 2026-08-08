@@ -1292,18 +1292,20 @@ function addBubble(who, content, scroll = true, personaKey = 'lina', label = nul
 let currentAudio = null;
 
 // iOS/Safari erlaubt audio.play() nur, wenn es direkt aus einem Fingertipp
-// ausgelöst wird. Im Anruf-Modus kommt die Antwort aber über Spracherkennung
-// (kein Tap), also blockiert Safari die echte Stimme und die App fällt
-// still auf die Browser-Ersatzstimme zurück. Fix: beim allerersten Tap
-// irgendwo auf der Seite ein winziges stummes Audio abspielen - das
-// "entsperrt" programmatisches audio.play() für den Rest der Sitzung.
+// ausgelöst wird - UND das gilt pro Audio-Element, nicht global. Ein neu
+// erzeugtes `new Audio()` ist wieder gesperrt, selbst wenn vorher schon
+// mal ein anderes Audio-Element freigeschaltet wurde. Fix: EIN EINZIGES,
+// wiederverwendetes Audio-Element für die ganze Sitzung - beim ersten Tap
+// freischalten, danach immer nur dessen `src` austauschen statt ein neues
+// Element zu erzeugen.
+const ttsAudioEl = new Audio();
 let audioUnlocked = false;
 function unlockAudioPlayback() {
   if (audioUnlocked) return;
   audioUnlocked = true;
   try {
-    const silence = new Audio('data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=');
-    silence.play().catch(() => {});
+    ttsAudioEl.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=';
+    ttsAudioEl.play().catch(() => {});
   } catch (e) {}
 }
 document.addEventListener('click', unlockAudioPlayback, { once: true });
@@ -1333,10 +1335,11 @@ async function speak(text, onEnd, force = false, personaKey = 'lina') {
     const data = await res.json();
     if (!data.audio) throw new Error('Kein Audio erhalten');
 
-    const audio = new Audio(`data:${data.mime};base64,${data.audio}`);
+    const audio = ttsAudioEl;
     currentAudio = audio;
     audio.onended = () => { currentAudio = null; if (onEnd) onEnd(); };
     audio.onerror = () => { currentAudio = null; speakFallback(text, onEnd, personaKey); };
+    audio.src = `data:${data.mime};base64,${data.audio}`;
     await audio.play();
   } catch (err) {
     speakFallback(text, onEnd, personaKey);
