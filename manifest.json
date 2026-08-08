@@ -1,6 +1,6 @@
 {
-  "name": "Lina & Team",
-  "short_name": "Lina",
+  "name": "Team",
+  "short_name": "Team",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
